@@ -1,0 +1,41 @@
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: {{ .Release.Name }}-mysql-user
+#   namespace: {{ .Release.Namespace }}
+# spec:
+#   backoffLimit: 4
+#   template:
+#     spec:
+#       volumes:
+#       - name: {{ .Release.Name }}-config
+#         configMap:
+#           name: {{ .Release.Name }}-mysql-user-config
+#       restartPolicy: Never  
+#       initContainers:
+#       - name: init-commondb
+#         image: alpine
+#         command: ["sh", "-c", "for i in $(seq 1 300); do nc -zvw1 {{ .Release.Name }} 3306 && exit 0 || sleep 10; done; exit 1"]
+#       containers:
+#       - name: {{ .Release.Name }}-mysql-user
+#         volumeMounts:
+#           - name: {{ .Release.Name }}-config
+#             mountPath: /app/
+#         image: {{ include "mysql.image" . }}
+#         imagePullPolicy: {{ .Values.pullPolicy }} 
+#         command: ["/bin/sh","-c"]
+#         args: ["set -x ; bash /app/createuser.sh"]
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   labels:
+#   name: {{ .Release.Name }}-mysql-user-config
+  
+# data:
+#   createuser.sh: |-
+#     #!/bin/bash <<EOF
+#     mysql -h mysql -u root -p'ukay' 
+#     CREATE USER 'mohit'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+#     GRANT CREATE, ALTER, DROP, INSERT, UPDATE, DELETE, SELECT, REFERENCES, RELOAD on *.* TO 'mohit'@'localhost' WITH GRANT OPTION;
+#     EOF
